@@ -1,4 +1,8 @@
 
+using CRMWepApi.Data;
+using CRMWepApi.Services;
+using Microsoft.EntityFrameworkCore;
+
 namespace CRMWepApi
 {
     public class Program
@@ -13,6 +17,13 @@ namespace CRMWepApi
             // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
             builder.Services.AddEndpointsApiExplorer();
             builder.Services.AddSwaggerGen();
+            builder.Services.AddDbContext<CrmDbContext>(options =>
+    options.UseSqlServer(builder.Configuration.GetConnectionString("Conn")));
+
+
+            // Add Services
+            builder.Services.AddScoped<AdminService>();
+            //builder.Services.AddScoped<ManagerService>();
 
             var app = builder.Build();
 
