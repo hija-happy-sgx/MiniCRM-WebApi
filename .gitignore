@@ -1,0 +1,51 @@
+﻿# Build output folders
+bin/
+obj/
+
+# Visual Studio files
+.vs/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+
+# VS Code settings (if using VS Code as well)
+.vscode/
+
+# NuGet packages
+packages/
+*.nupkg
+
+# LocalDB / SQL Server files
+*.mdf
+*.ldf
+*.ndf
+App_Data/
+
+# Publish-related files
+*.Publish.xml
+*.pubxml
+*.publishproj
+
+# Logs
+*.log
+
+# Rider IDE files (if relevant)
+.idea/
+
+# ReSharper files
+_ReSharper*/
+*.[Rr]e[Ss]harper
+*.DotSettings.user
+
+# Dotnet user secrets (stores sensitive data, like connection strings)
+secrets.json
+
+# Others
+*.cache
+*.bak
+*.backup
+*.log
+
+# IIS Express
+iisexpress/

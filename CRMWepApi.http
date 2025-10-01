@@ -1,0 +1,6 @@
+@CRMWepApi_HostAddress = http://localhost:5264
+
+GET {{CRMWepApi_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
