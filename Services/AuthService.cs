@@ -1,157 +1,100 @@
-﻿//using CRMWepApi.Data;
-//using CRMWepApi.Models;
+﻿using CRMWepApi.Data;
+using CRMWepApi.Models;
+using Microsoft.Extensions.Configuration;
+using Microsoft.IdentityModel.Tokens;
+using System.IdentityModel.Tokens.Jwt;
+using System.Linq;
+using System.Security.Claims;
+using System.Text;
 
-//namespace CRMWepApi.Services
-//{
-//    public interface IAdminService
-//    {
-//        Task<UserResponseDto> CreateManagerAsync(CreateManagerDto dto);
-//        Task<UserResponseDto> CreateSrmAsync(CreateSrmDto dto);
-//        Task<UserResponseDto> CreateSalesRepAsync(CreateSalesRepDto dto);
-//        Task<List<UserResponseDto>> GetAllUsersAsync();
-//        Task<PipelineStage> CreatePipelineStageAsync(CreatePipelineStageDto dto);
-//        Task<List<PipelineStage>> GetPipelineStagesAsync();
-//        Task<bool> DeleteUserAsync(int id);
-//    }
+namespace CRMWepApi.Services
+{
+    public class AuthService
+    {
+        private readonly CrmDbContext _context;
+        private readonly IConfiguration _config;
 
-//    public class AdminService : IAdminService
-//    {
-//        private readonly CrmDbContext _context;
+        public AuthService(CrmDbContext context, IConfiguration config)
+        {
+            _context = context;
+            _config = config;
+        }
 
-//        public AdminService(CrmDbContext context)
-//        {
-//            _context = context;
-//        }
+        /// <summary>
+        /// Authenticate user by email + password and automatically detect role.
+        /// Returns JWT token if successful, null if invalid.
+        /// </summary>
+        public string Authenticate(string email, string password, out object user, out string role)
+        {
+            user = null;
+            role = null;
 
-//        public async Task<UserResponseDto> CreateManagerAsync(CreateManagerDto dto)
-//        {
-//            var manager = new Manager
-//            {
-//                Name = dto.Name,
-//                Email = dto.Email,
-//                PasswordHash = BCrypt.Net.BCrypt.HashPassword(dto.Password),
-//                CreatedAt = DateTime.UtcNow
-//            };
+            //0. CHeck Admin
 
-//            _context.Managers.Add(manager);
-//            await _context.SaveChangesAsync();
+            var admin = _context.Admins.FirstOrDefault(a => a.Email == email && a.PasswordHash == password);
+            if (admin != null) 
+            { user = admin;
+                role = "Admin";
+            }
 
-//            return new UserResponseDto
-//            {
-//                Id = manager.ManagerId,
-//                Role = "Manager",
-//                Name = manager.Name,
-//                Email = manager.Email
-//            };
-//        }
 
-//        public async Task<UserResponseDto> CreateSrmAsync(CreateSrmDto dto)
-//        {
-//            var srm = new SalesRepManager
-//            {
-//                Name = dto.Name,
-//                Email = dto.Email,
-//                PasswordHash = BCrypt.Net.BCrypt.HashPassword(dto.Password),
-//                ManagerId = dto.ManagerId,
-//                CreatedAt = DateTime.UtcNow
-//            };
+            // 1. Check Managers
+            var manager = _context.Managers.FirstOrDefault(m => m.Email == email && m.Password == password);
+            if (manager != null)
+            {
+                user = manager;
+                role = "Manager";
+            }
+            // 2. Check SalesRepManagers
+            else
+            {
+                var srm = _context.SalesRepManagers.FirstOrDefault(s => s.Email == email && s.PasswordHash == password);
+                if (srm != null)
+                {
+                    user = srm;
+                    role = "SalesRepManager";
+                }
+                // 3. Check SalesReps
+                else
+                {
+                    var rep = _context.SalesReps.FirstOrDefault(r => r.Email == email && r.PasswordHash == password);
+                    if (rep != null)
+                    {
+                        user = rep;
+                        role = "SalesRep";
+                    }
+                }
+            }
 
-//            _context.SalesRepManagers.Add(srm);
-//            await _context.SaveChangesAsync();
+            if (user == null) return null;
 
-//            return new UserResponseDto
-//            {
-//                Id = srm.SrmId,
-//                Role = "SalesRepManager",
-//                Name = srm.Name,
-//                Email = srm.Email
-//            };
-//        }
+            // Generate JWT
+            var tokenHandler = new JwtSecurityTokenHandler();
+            var key = Encoding.ASCII.GetBytes(_config["Jwt:Key"]);
+            var tokenDescriptor = new SecurityTokenDescriptor
+            {
+                Subject = new ClaimsIdentity(new Claim[]
+                {
+                    new Claim("id", GetUserId(user).ToString()),
+                    new Claim(ClaimTypes.Role, role)
+                }),
+                Expires = DateTime.UtcNow.AddHours(8),
+                SigningCredentials = new SigningCredentials(new SymmetricSecurityKey(key), SecurityAlgorithms.HmacSha256Signature)
+            };
 
-//        public async Task<UserResponseDto> CreateSalesRepAsync(CreateSalesRepDto dto)
-//        {
-//            var rep = new SalesRep
-//            {
-//                Name = dto.Name,
-//                Email = dto.Email,
-//                PasswordHash = BCrypt.Net.BCrypt.HashPassword(dto.Password),
-//                SrmId = dto.SrmId,
-//                CreatedAt = DateTime.UtcNow
-//            };
+            var token = tokenHandler.CreateToken(tokenDescriptor);
+            return tokenHandler.WriteToken(token);
+        }
 
-//            _context.SalesReps.Add(rep);
-//            await _context.SaveChangesAsync();
-
-//            return new UserResponseDto
-//            {
-//                Id = rep.SalesRepId,
-//                Role = "SalesRep",
-//                Name = rep.Name,
-//                Email = rep.Email
-//            };
-//        }
-
-//        public async Task<List<UserResponseDto>> GetAllUsersAsync()
-//        {
-//            var managers = await _context.Managers
-//                .Select(m => new UserResponseDto
-//                {
-//                    Id = m.ManagerId,
-//                    Role = "Manager",
-//                    Name = m.Name,
-//                    Email = m.Email
-//                }).ToListAsync();
-
-//            var srms = await _context.SalesRepManagers
-//                .Select(s => new UserResponseDto
-//                {
-//                    Id = s.SrmId,
-//                    Role = "SalesRepManager",
-//                    Name = s.Name,
-//                    Email = s.Email
-//                }).ToListAsync();
-
-//            var reps = await _context.SalesReps
-//                .Select(r => new UserResponseDto
-//                {
-//                    Id = r.SalesRepId,
-//                    Role = "SalesRep",
-//                    Name = r.Name,
-//                    Email = r.Email
-//                }).ToListAsync();
-
-//            return managers.Concat(srms).Concat(reps).ToList();
-//        }
-
-//        public async Task<PipelineStage> CreatePipelineStageAsync(CreatePipelineStageDto dto)
-//        {
-//            var stage = new PipelineStage
-//            {
-//                StageName = dto.StageName,
-//                StageOrder = dto.StageOrder
-//            };
-
-//            _context.PipelineStages.Add(stage);
-//            await _context.SaveChangesAsync();
-//            return stage;
-//        }
-
-//        public async Task<List<PipelineStage>> GetPipelineStagesAsync()
-//        {
-//            return await _context.PipelineStages.OrderBy(s => s.StageOrder).ToListAsync();
-//        }
-
-//        public async Task<bool> DeleteUserAsync(int id)
-//        {
-//            var user = await _context.Managers.FindAsync(id)
-//                    ?? await _context.SalesRepManagers.FindAsync(id)
-//                    ?? await _context.SalesReps.FindAsync(id);
-
-//            if (user == null) return false;
-
-//            _context.Remove(user);
-//            await _context.SaveChangesAsync();
-//            return true;
-//        }
-//    }
-//}
+        private int GetUserId(object user)
+        {
+            return user switch
+            {
+                Manager m => m.ManagerId,
+                SalesRepManager s => s.SrmId,
+                SalesRep r => r.SalesRepId,
+                _ => 0
+            };
+        }
+    }
+}

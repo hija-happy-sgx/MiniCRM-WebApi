@@ -34,7 +34,6 @@ namespace CRMWepApi.Services
 
 
         // create manager
-
         public async Task<object> CreateManagerAsync(RegisterUserDto Dto)
         {
             if (await _context.Managers.AnyAsync(m => m.Email == Dto.Email))
@@ -44,8 +43,8 @@ namespace CRMWepApi.Services
             {
                 Name = Dto.Name,
                 Email = Dto.Email,
-                PasswordHash = HashPassword(Dto.Password),
-                CreatedAt = DateTime.UtcNow,
+                Password = HashPassword(Dto.Password),
+                //CreatedAt = DateTime.UtcNow,
                 
             };
 
@@ -105,7 +104,7 @@ namespace CRMWepApi.Services
                     manager.Name = dto.Name;
                     manager.Email = dto.Email;
                     if (!string.IsNullOrEmpty(dto.Password))
-                        manager.PasswordHash = HashPassword(dto.Password);
+                        manager.Password = HashPassword(dto.Password);
                     break;
                 case "salesrepmanager":
                     var srm = await _context.SalesRepManagers.FindAsync(id);

@@ -2,7 +2,10 @@
 using CRMWepApi.Data;
 using CRMWepApi.Services;
 using Microsoft.EntityFrameworkCore;
+using System.Text;
 
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.IdentityModel.Tokens;
 namespace CRMWepApi
 {
     public class Program
@@ -23,8 +26,33 @@ namespace CRMWepApi
 
             // Add Services
             builder.Services.AddScoped<AdminService>();
-            //builder.Services.AddScoped<ManagerService>();
+            builder.Services.AddScoped<AuthService>();
+            builder.Services.AddScoped<ManagerService>();
+            builder.Services.AddScoped<SalesRepService>();
+            builder.Services.AddScoped<CommunicationLogService>();
+            builder.Services.AddScoped<PipelineService>();
 
+
+            // JWT Authentication
+            var key = Encoding.ASCII.GetBytes(builder.Configuration["Jwt:Key"]);
+            builder.Services.AddAuthentication(options =>
+            {
+                options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+                options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+            })
+            .AddJwtBearer(options =>
+            {
+                options.RequireHttpsMetadata = false;
+                options.SaveToken = true;
+                options.TokenValidationParameters = new TokenValidationParameters
+                {
+                    ValidateIssuer = false,
+                    ValidateAudience = false,
+                    ValidateIssuerSigningKey = true,
+                    IssuerSigningKey = new SymmetricSecurityKey(key),
+                    ClockSkew = TimeSpan.Zero
+                };
+            });
             var app = builder.Build();
 
             // Configure the HTTP request pipeline.
@@ -35,7 +63,7 @@ namespace CRMWepApi
             }
 
             app.UseHttpsRedirection();
-
+            app.UseAuthentication();
             app.UseAuthorization();
 
 
