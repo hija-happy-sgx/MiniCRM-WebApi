@@ -1,11 +1,11 @@
 
 using CRMWepApi.Data;
 using CRMWepApi.Services;
-using Microsoft.EntityFrameworkCore;
-using System.Text;
-
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
+using System.Security.Claims;
+using System.Text;
 namespace CRMWepApi
 {
     public class Program
@@ -31,7 +31,10 @@ namespace CRMWepApi
             builder.Services.AddScoped<SalesRepService>();
             builder.Services.AddScoped<CommunicationLogService>();
             builder.Services.AddScoped<PipelineService>();
-
+            builder.Services.AddScoped<DealsService>();
+            builder.Services.AddScoped<LeadsService>();
+            builder.Services.AddScoped<SalesRepManagerService>();
+            
 
             // JWT Authentication
             var key = Encoding.ASCII.GetBytes(builder.Configuration["Jwt:Key"]);
@@ -50,7 +53,9 @@ namespace CRMWepApi
                     ValidateAudience = false,
                     ValidateIssuerSigningKey = true,
                     IssuerSigningKey = new SymmetricSecurityKey(key),
-                    ClockSkew = TimeSpan.Zero
+                    ClockSkew = TimeSpan.Zero,
+                    RoleClaimType = ClaimTypes.Role,  
+                    NameClaimType = "id"
                 };
             });
             var app = builder.Build();

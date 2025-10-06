@@ -1,4 +1,5 @@
 ﻿using CRMWepApi.Data;
+using CRMWepApi.Enums;
 using CRMWepApi.Models;
 using Microsoft.Extensions.Configuration;
 using Microsoft.IdentityModel.Tokens;
@@ -34,7 +35,7 @@ namespace CRMWepApi.Services
             var admin = _context.Admins.FirstOrDefault(a => a.Email == email && a.PasswordHash == password);
             if (admin != null) 
             { user = admin;
-                role = "Admin";
+                role = UserRole.Admin.ToString();
             }
 
 
@@ -43,7 +44,7 @@ namespace CRMWepApi.Services
             if (manager != null)
             {
                 user = manager;
-                role = "Manager";
+                role = UserRole.Manager.ToString(); ;
             }
             // 2. Check SalesRepManagers
             else
@@ -52,7 +53,7 @@ namespace CRMWepApi.Services
                 if (srm != null)
                 {
                     user = srm;
-                    role = "SalesRepManager";
+                    role = UserRole.SalesRepManager.ToString();
                 }
                 // 3. Check SalesReps
                 else
@@ -61,7 +62,7 @@ namespace CRMWepApi.Services
                     if (rep != null)
                     {
                         user = rep;
-                        role = "SalesRep";
+                        role = UserRole.SalesRep.ToString();
                     }
                 }
             }
@@ -90,6 +91,7 @@ namespace CRMWepApi.Services
         {
             return user switch
             {
+                Admin a =>a.AdminId,
                 Manager m => m.ManagerId,
                 SalesRepManager s => s.SrmId,
                 SalesRep r => r.SalesRepId,

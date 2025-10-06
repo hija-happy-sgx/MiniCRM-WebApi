@@ -1,6 +1,9 @@
-﻿using CRMWepApi.Models;
+﻿using CRMWepApi.DTOs;
+using CRMWepApi.Models;
 using CRMWepApi.Services;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using System.Security.Claims;
 
 namespace CRMWepApi.Controllers
 {
@@ -16,7 +19,7 @@ namespace CRMWepApi.Controllers
         }
 
         [HttpPost("login")]
-        public IActionResult Login([FromBody] LoginRequest request)
+        public IActionResult Login([FromBody] LoginRequestDto request)
         {
             if (string.IsNullOrEmpty(request.Email) || string.IsNullOrEmpty(request.Password))
                 return BadRequest(new { message = "Email and password are required." });
@@ -37,6 +40,18 @@ namespace CRMWepApi.Controllers
             });
         }
 
+        // just for role tesT
+        [Authorize]
+        [HttpGet("whoami")]
+        public IActionResult WhoAmI()
+        {
+            return Ok(new
+            {
+                userId = User.FindFirst("id")?.Value,
+                role = User.FindFirst(ClaimTypes.Role)?.Value
+            });
+        }
+
         private int GetUserId(object user)
         {
             return user switch
@@ -50,9 +65,5 @@ namespace CRMWepApi.Controllers
         }
     }
 
-    public class LoginRequest
-    {
-        public string Email { get; set; }
-        public string Password { get; set; }
-    }
+  
 }

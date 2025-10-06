@@ -9,7 +9,7 @@ namespace CRMWepApi.Controllers
 {
     [Route("api/admin")]
     [ApiController]
-    [Authorize(Roles = "Admins")] // Only Admin can access these endpoints
+    [Authorize(Roles = "Admin")] // Only Admin can access these endpoints
     public class AdminController : ControllerBase
     {
         private readonly AdminService _adminService;
