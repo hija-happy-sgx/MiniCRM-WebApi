@@ -24,6 +24,7 @@ namespace CRMWepApi
     options.UseSqlServer(builder.Configuration.GetConnectionString("Conn")));
 
 
+
             // Add Services
             builder.Services.AddScoped<AdminService>();
             builder.Services.AddScoped<AuthService>();
@@ -58,6 +59,18 @@ namespace CRMWepApi
                     NameClaimType = "id"
                 };
             });
+
+            builder.Services.AddCors(options =>
+            {
+                options.AddPolicy("AllowAngularApp",
+                    builder =>
+                    {
+                        builder.WithOrigins("http://localhost:4200") // Angular dev server URL
+                               .AllowAnyHeader()
+                               .AllowAnyMethod();
+                    });
+            });
+
             var app = builder.Build();
 
             // Configure the HTTP request pipeline.
@@ -68,6 +81,9 @@ namespace CRMWepApi
             }
 
             app.UseHttpsRedirection();
+
+            app.UseCors("AllowAngularApp");
+
             app.UseAuthentication();
             app.UseAuthorization();
 

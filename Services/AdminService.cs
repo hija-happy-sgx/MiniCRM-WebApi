@@ -1,6 +1,7 @@
 ﻿using CRMWepApi.Data;
 using CRMWepApi.DTOs;
 using CRMWepApi.Models;
+using CRMWepApi.Utilities;
 using Microsoft.EntityFrameworkCore;
 using System.Security.Cryptography;
 using System.Text;
@@ -15,6 +16,9 @@ namespace CRMWepApi.Services
         {
             _context = context;
         }
+
+        
+
 
         //to list all users (managers, srms, salesreps)
         public async Task<object> GetAllUsersAsync()
@@ -43,7 +47,7 @@ namespace CRMWepApi.Services
             {
                 Name = Dto.Name,
                 Email = Dto.Email,
-                Password = HashPassword(Dto.Password),
+                Password = PasswordHelper.HashPassword(Dto.Password),
                 //CreatedAt = DateTime.UtcNow,
                 
             };
@@ -62,7 +66,7 @@ namespace CRMWepApi.Services
             {
                 Name = dto.Name,
                 Email = dto.Email,
-                PasswordHash = HashPassword(dto.Password),
+                PasswordHash = PasswordHelper.HashPassword(dto.Password),
                 CreatedAt = DateTime.UtcNow,
                 ManagerId = managerId
             };
@@ -81,7 +85,7 @@ namespace CRMWepApi.Services
             {
                 Name = dto.Name,
                 Email = dto.Email,
-                PasswordHash = HashPassword(dto.Password),
+                PasswordHash = PasswordHelper.HashPassword(dto.Password),
                 CreatedAt = DateTime.UtcNow,
                 SrmId = srmId
             };
@@ -104,7 +108,7 @@ namespace CRMWepApi.Services
                     manager.Name = dto.Name;
                     manager.Email = dto.Email;
                     if (!string.IsNullOrEmpty(dto.Password))
-                        manager.Password = HashPassword(dto.Password);
+                        manager.Password = PasswordHelper.HashPassword(dto.Password);
                     break;
                 case "salesrepmanager":
                     var srm = await _context.SalesRepManagers.FindAsync(id);
@@ -112,7 +116,7 @@ namespace CRMWepApi.Services
                     srm.Name = dto.Name;
                     srm.Email = dto.Email;
                     if (!string.IsNullOrEmpty(dto.Password))
-                        srm.PasswordHash = HashPassword(dto.Password);
+                        srm.PasswordHash = PasswordHelper.HashPassword(dto.Password);
                     break;
                 case "salesrep":
                     var sr = await _context.SalesReps.FindAsync(id);
@@ -120,7 +124,7 @@ namespace CRMWepApi.Services
                     sr.Name = dto.Name;
                     sr.Email = dto.Email;
                     if (!string.IsNullOrEmpty(dto.Password))
-                        sr.PasswordHash = HashPassword(dto.Password);
+                        sr.PasswordHash = PasswordHelper.   HashPassword(dto.Password);
                     break;
             }
 
@@ -171,12 +175,6 @@ namespace CRMWepApi.Services
         }
 
 
-        private string HashPassword(string password)
-        {
-            using var sha = SHA256.Create();
-            var bytes = Encoding.UTF8.GetBytes(password);
-            var hash = sha.ComputeHash(bytes);
-            return Convert.ToBase64String(hash);
-        }
+       
     }
 }

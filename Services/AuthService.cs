@@ -1,6 +1,7 @@
 ﻿using CRMWepApi.Data;
 using CRMWepApi.Enums;
 using CRMWepApi.Models;
+using CRMWepApi.Utilities;
 using Microsoft.Extensions.Configuration;
 using Microsoft.IdentityModel.Tokens;
 using System.IdentityModel.Tokens.Jwt;
@@ -30,63 +31,75 @@ namespace CRMWepApi.Services
             user = null;
             role = null;
 
+
+            var hashedPassword = PasswordHelper.HashPassword(password);
+
             //0. CHeck Admin
 
             var admin = _context.Admins.FirstOrDefault(a => a.Email == email && a.PasswordHash == password);
-            if (admin != null) 
-            { user = admin;
-                role = UserRole.Admin.ToString();
-            }
-
-
-            // 1. Check Managers
-            var manager = _context.Managers.FirstOrDefault(m => m.Email == email && m.Password == password);
-            if (manager != null)
+            if (admin != null)
             {
-                user = manager;
-                role = UserRole.Manager.ToString(); ;
-            }
-            // 2. Check SalesRepManagers
-            else
-            {
-                var srm = _context.SalesRepManagers.FirstOrDefault(s => s.Email == email && s.PasswordHash == password);
-                if (srm != null)
+                if (admin.PasswordHash == password || admin.PasswordHash == hashedPassword)
                 {
-                    user = srm;
-                    role = UserRole.SalesRepManager.ToString();
+                    {
+                        user = admin;
+                        role = UserRole.Admin.ToString();
+                    }
+                }
+
+            }
+
+                // 1. Check Managers
+                if (user == null)
+                {
+                    var manager = _context.Managers.FirstOrDefault(m => m.Email == email && m.Password == hashedPassword);
+                    if (manager != null)
+                    {
+                        user = manager;
+                        role = UserRole.Manager.ToString();
+                    }
+                }
+                // 2. Check SalesRepManagers
+                if (user == null)
+                {
+                    var srm = _context.SalesRepManagers.FirstOrDefault(s => s.Email == email && s.PasswordHash == hashedPassword);
+                    if (srm != null)
+                    {
+                        user = srm;
+                        role = UserRole.SalesRepManager.ToString();
+                    }
                 }
                 // 3. Check SalesReps
-                else
+                if (user == null)
                 {
-                    var rep = _context.SalesReps.FirstOrDefault(r => r.Email == email && r.PasswordHash == password);
+                    var rep = _context.SalesReps.FirstOrDefault(r => r.Email == email && r.PasswordHash == hashedPassword);
                     if (rep != null)
                     {
                         user = rep;
                         role = UserRole.SalesRep.ToString();
                     }
                 }
-            }
 
-            if (user == null) return null;
+                if (user == null) return null;
 
-            // Generate JWT
-            var tokenHandler = new JwtSecurityTokenHandler();
-            var key = Encoding.ASCII.GetBytes(_config["Jwt:Key"]);
-            var tokenDescriptor = new SecurityTokenDescriptor
-            {
-                Subject = new ClaimsIdentity(new Claim[]
+                // Generate JWT
+                var tokenHandler = new JwtSecurityTokenHandler();
+                var key = Encoding.ASCII.GetBytes(_config["Jwt:Key"]);
+                var tokenDescriptor = new SecurityTokenDescriptor
                 {
+                    Subject = new ClaimsIdentity(new Claim[]
+                    {
                     new Claim("id", GetUserId(user).ToString()),
                     new Claim(ClaimTypes.Role, role)
-                }),
-                Expires = DateTime.UtcNow.AddHours(8),
-                SigningCredentials = new SigningCredentials(new SymmetricSecurityKey(key), SecurityAlgorithms.HmacSha256Signature)
-            };
+                    }),
+                    Expires = DateTime.UtcNow.AddHours(8),
+                    SigningCredentials = new SigningCredentials(new SymmetricSecurityKey(key), SecurityAlgorithms.HmacSha256Signature)
+                };
 
-            var token = tokenHandler.CreateToken(tokenDescriptor);
-            return tokenHandler.WriteToken(token);
-        }
-
+                var token = tokenHandler.CreateToken(tokenDescriptor);
+                return tokenHandler.WriteToken(token);
+            }
+        
         private int GetUserId(object user)
         {
             return user switch

@@ -1,9 +1,11 @@
 ﻿using CRMWebApi.DTOs;
+using CRMWepApi.Data;
 using CRMWepApi.DTOs;
 using CRMWepApi.Models;
 using CRMWepApi.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 
 namespace CRMWepApi.Controllers
 {
@@ -13,19 +15,46 @@ namespace CRMWepApi.Controllers
     public class AdminController : ControllerBase
     {
         private readonly AdminService _adminService;
-
-        public AdminController(AdminService adminService)
+        private readonly CrmDbContext _context;
+        public AdminController(AdminService adminService, CrmDbContext context)
         {
             _adminService = adminService;
+            _context = context;
         }
 
         #region USERS
 
+        // to get all users
         [HttpGet("users")]
         public async Task<IActionResult> GetAllUsers()
         {
             var users = await _adminService.GetAllUsersAsync();
             return Ok(users);
+        }
+
+        //to get all managers
+        [HttpGet("managers")]
+        public async Task<IActionResult> GetAllManagers()
+        {
+            var managers = await _context.Managers.ToListAsync();
+
+            return Ok(new { data = managers });
+        }
+        //to get all srm
+        [HttpGet("salesrepmanagers")]
+        public async Task<IActionResult> GetAllSalesRepManagers()
+        {
+            var salesrepmanager = await _context.SalesRepManagers.ToListAsync();
+
+            return Ok(new { data = salesrepmanager });
+        }
+        //to get all sr
+        [HttpGet("salesrep")]
+        public async Task<IActionResult> GetAllSalesRep()
+        {
+            var salesrep = await _context.SalesReps.ToListAsync();
+
+            return Ok(new { data = salesrep });
         }
 
         [HttpPost("manager")]
@@ -41,7 +70,6 @@ namespace CRMWepApi.Controllers
             var srm = await _adminService.CreateSalesRepManagerAsync(dto, managerId);
             return Ok(srm);
         }
-
         [HttpPost("salesrep/{srmId}")]
         public async Task<IActionResult> CreateSalesRep(int srmId, [FromBody] RegisterUserDto dto)
         {
