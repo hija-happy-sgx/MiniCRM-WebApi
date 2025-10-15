@@ -2,12 +2,13 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using System.Diagnostics;
 
 namespace CRMWepApi.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    [Authorize(Roles = "Manager")]
+    //[Authorize(Roles = "Manager")]
     public class ManagerController : ControllerBase
     {
         
@@ -20,8 +21,10 @@ namespace CRMWepApi.Controllers
 
             // 1️⃣ List SalesRep Managers under this Manager
             [HttpGet("salesrepmanagers")]
+
             public async Task<IActionResult> GetSalesRepManagers([FromQuery] int managerId)
             {
+            
                 var result = await _managerService.GetSalesRepManagersAsync(managerId);
                 return Ok(result);
             }

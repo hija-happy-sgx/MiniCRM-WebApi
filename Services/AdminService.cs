@@ -17,9 +17,6 @@ namespace CRMWepApi.Services
             _context = context;
         }
 
-        
-
-
         //to list all users (managers, srms, salesreps)
         public async Task<object> GetAllUsersAsync()
         {

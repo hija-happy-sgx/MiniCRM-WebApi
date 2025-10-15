@@ -90,9 +90,13 @@ namespace CRMWepApi.Services
                     Subject = new ClaimsIdentity(new Claim[]
                     {
                     new Claim("id", GetUserId(user).ToString()),
-                    new Claim(ClaimTypes.Role, role)
+                    //new Claim(ClaimTypes.Role, role)
                     }),
                     Expires = DateTime.UtcNow.AddHours(8),
+
+                    Issuer = _config["Jwt:Issuer"],
+                    Audience = _config["Jwt:Audience"],
+
                     SigningCredentials = new SigningCredentials(new SymmetricSecurityKey(key), SecurityAlgorithms.HmacSha256Signature)
                 };
 

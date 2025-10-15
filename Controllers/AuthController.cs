@@ -19,6 +19,7 @@ namespace CRMWepApi.Controllers
         }
 
         [HttpPost("login")]
+
         public IActionResult Login([FromBody] LoginRequestDto request)
         {
             if (string.IsNullOrEmpty(request.Email) || string.IsNullOrEmpty(request.Password))
