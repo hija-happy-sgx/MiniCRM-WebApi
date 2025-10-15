@@ -49,18 +49,18 @@ namespace CRMWepApi.Services
 
             }
 
-                // 1. Check Managers
-                if (user == null)
+            // 1. Check Managers
+            if (user == null)
+            {
+                var manager = _context.Managers.FirstOrDefault(m => m.Email == email);
+                if (manager != null && (manager.Password == password || manager.Password == hashedPassword))
                 {
-                    var manager = _context.Managers.FirstOrDefault(m => m.Email == email && m.Password == hashedPassword);
-                    if (manager != null)
-                    {
-                        user = manager;
-                        role = UserRole.Manager.ToString();
-                    }
+                    user = manager;
+                    role = UserRole.Manager.ToString();
                 }
-                // 2. Check SalesRepManagers
-                if (user == null)
+            }
+            // 2. Check SalesRepManagers
+            if (user == null)
                 {
                     var srm = _context.SalesRepManagers.FirstOrDefault(s => s.Email == email && s.PasswordHash == hashedPassword);
                     if (srm != null)

@@ -10,7 +10,7 @@
 
     public enum LeadStatus
     {
-        New,
+        New, 
         Contacted,
         Qualified,
         Converted,

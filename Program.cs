@@ -35,10 +35,12 @@ namespace CRMWepApi
             builder.Services.AddScoped<DealsService>();
             builder.Services.AddScoped<LeadsService>();
             builder.Services.AddScoped<SalesRepManagerService>();
+            //builder.Services.AddScoped<UserService>();
             
 
             // JWT Authentication
-            var key = Encoding.ASCII.GetBytes(builder.Configuration["Jwt:Key"]);
+            
+
             builder.Services.AddAuthentication(options =>
             {
                 options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
@@ -46,6 +48,7 @@ namespace CRMWepApi
             })
             .AddJwtBearer(options =>
             {
+               
                 options.RequireHttpsMetadata = false;
                 options.SaveToken = true;
                 options.TokenValidationParameters = new TokenValidationParameters
@@ -53,13 +56,14 @@ namespace CRMWepApi
                     ValidateIssuer = false,
                     ValidateAudience = false,
                     ValidateIssuerSigningKey = true,
-                    IssuerSigningKey = new SymmetricSecurityKey(key),
+                    IssuerSigningKey = new SymmetricSecurityKey(Encoding.ASCII.GetBytes(builder.Configuration["Jwt:Key"])),
                     ClockSkew = TimeSpan.Zero,
-                    RoleClaimType = ClaimTypes.Role,  
-                    NameClaimType = "id"
+                    RoleClaimType = "role",
+                    NameClaimType = "id",
                 };
             });
-
+            builder.Services.AddAuthorization();
+          
             builder.Services.AddCors(options =>
             {
                 options.AddPolicy("AllowAngularApp",

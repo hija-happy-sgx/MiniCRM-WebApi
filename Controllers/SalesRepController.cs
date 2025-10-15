@@ -7,7 +7,7 @@ namespace CRMWepApi.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    [Authorize(Roles = "SalesReps")]
+    [Authorize(Roles = "SalesRep")]
     public class SalesRepController : ControllerBase
     {
         private readonly SalesRepService _service;
