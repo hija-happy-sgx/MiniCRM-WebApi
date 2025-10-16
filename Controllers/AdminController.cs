@@ -28,6 +28,7 @@ namespace CRMWepApi.Controllers
         [HttpGet("users")]
         public async Task<IActionResult> GetAllUsers()
         {
+
             var users = await _adminService.GetAllUsersAsync();
             return Ok(users);
         }

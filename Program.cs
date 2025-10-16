@@ -36,10 +36,24 @@ namespace CRMWepApi
             builder.Services.AddScoped<LeadsService>();
             builder.Services.AddScoped<SalesRepManagerService>();
             //builder.Services.AddScoped<UserService>();
-            
+
+
+
+            builder.Services.AddCors(options =>
+            {
+                options.AddPolicy("AllowAngularApp",
+                    builder =>
+                    {
+                        builder.WithOrigins("http://localhost:4200") // Angular dev server URL
+                               .AllowAnyHeader()
+                               .AllowAnyMethod();
+                    });
+            });
+
+
 
             // JWT Authentication
-            
+
 
             builder.Services.AddAuthentication(options =>
             {
@@ -68,16 +82,7 @@ namespace CRMWepApi
             });
             builder.Services.AddAuthorization();
           
-            builder.Services.AddCors(options =>
-            {
-                options.AddPolicy("AllowAngularApp",
-                    builder =>
-                    {
-                        builder.WithOrigins("http://localhost:4200") // Angular dev server URL
-                               .AllowAnyHeader()
-                               .AllowAnyMethod();
-                    });
-            });
+          
 
             var app = builder.Build();
 

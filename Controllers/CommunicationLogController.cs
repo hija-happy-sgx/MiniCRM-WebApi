@@ -7,7 +7,7 @@ namespace CRMWepApi.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    [Authorize]
+    //[Authorize]
     public class CommunicationLogController : ControllerBase
     {
         private readonly CommunicationLogService _logService;

@@ -28,14 +28,18 @@ namespace CRMWepApi.Services
         /// </summary>
         public string Authenticate(string email, string password, out object user, out string role)
         {
+            Console.WriteLine($"🔍 STEP 3: Starting authentication process for: {email}");
+
+            var hashedPassword = PasswordHelper.HashPassword(password);
+            Console.WriteLine($"   - Password hashed: {hashedPassword.Substring(0, 20)}...");
+
+
             user = null;
             role = null;
 
 
-            var hashedPassword = PasswordHelper.HashPassword(password);
-
             //0. CHeck Admin
-
+            Console.WriteLine($"   - Checking Admin table...");
             var admin = _context.Admins.FirstOrDefault(a => a.Email == email && a.PasswordHash == password);
             if (admin != null)
             {
@@ -43,7 +47,10 @@ namespace CRMWepApi.Services
                 {
                     {
                         user = admin;
+
                         role = UserRole.Admin.ToString();
+
+                        Console.WriteLine($"STEP 4: Admin user found - ID: {admin.AdminId}");
                     }
                 }
 
@@ -52,59 +59,120 @@ namespace CRMWepApi.Services
             // 1. Check Managers
             if (user == null)
             {
+                Console.WriteLine($"   - Checking Manager table...");
                 var manager = _context.Managers.FirstOrDefault(m => m.Email == email);
                 if (manager != null && (manager.Password == password || manager.Password == hashedPassword))
                 {
                     user = manager;
                     role = UserRole.Manager.ToString();
+                    Console.WriteLine($"✅ STEP 4: Manager user found - ID: {manager.ManagerId}");
                 }
             }
             // 2. Check SalesRepManagers
             if (user == null)
                 {
-                    var srm = _context.SalesRepManagers.FirstOrDefault(s => s.Email == email && s.PasswordHash == hashedPassword);
+                Console.WriteLine($"   - Checking SalesRepManager table...");
+                var srm = _context.SalesRepManagers.FirstOrDefault(s => s.Email == email && s.PasswordHash == hashedPassword);
                     if (srm != null)
                     {
                         user = srm;
-                        role = UserRole.SalesRepManager.ToString();
-                    }
+                        role = UserRole.SalesRepManager.ToString(); Console.WriteLine($"✅ STEP 4: SalesRepManager user found - ID: {srm.SrmId}");
+                }
                 }
                 // 3. Check SalesReps
                 if (user == null)
                 {
-                    var rep = _context.SalesReps.FirstOrDefault(r => r.Email == email && r.PasswordHash == hashedPassword);
+                Console.WriteLine($"   - Checking SalesRep table...");
+                var rep = _context.SalesReps.FirstOrDefault(r => r.Email == email && r.PasswordHash == hashedPassword);
                     if (rep != null)
                     {
                         user = rep;
                         role = UserRole.SalesRep.ToString();
-                    }
+                    Console.WriteLine($"✅ STEP 4: SalesRep user found - ID: {rep.SalesRepId}");
+                }
                 }
 
-                if (user == null) return null;
-
-                // Generate JWT
-                var tokenHandler = new JwtSecurityTokenHandler();
-                var key = Encoding.ASCII.GetBytes(_config["Jwt:Key"]);
-                var tokenDescriptor = new SecurityTokenDescriptor
-                {
-                    Subject = new ClaimsIdentity(new Claim[]
-                    {
-                    new Claim("id", GetUserId(user).ToString()),
-                    //new Claim(ClaimTypes.Role, role)
-                    }),
-                    Expires = DateTime.UtcNow.AddHours(8),
-
-                    Issuer = _config["Jwt:Issuer"],
-                    Audience = _config["Jwt:Audience"],
-
-                    SigningCredentials = new SigningCredentials(new SymmetricSecurityKey(key), SecurityAlgorithms.HmacSha256Signature)
-                };
-
-                var token = tokenHandler.CreateToken(tokenDescriptor);
-                return tokenHandler.WriteToken(token);
+            if (user != null)
+            {
+                var token = GenerateToken(user, role);
+                Console.WriteLine($"🎫 STEP 5: JWT Token generated successfully");
+                Console.WriteLine($"   - Role in token: {role}");
+                Console.WriteLine($"   - User ID in token: {GetUserId(user)}");
+                Console.WriteLine($"   - Token (first 50 chars): {token.Substring(0, Math.Min(50, token.Length))}...");
+                return token;
             }
-        
-        private int GetUserId(object user)
+            else
+            {
+                Console.WriteLine($"❌ STEP 4: No user found with provided credentials");
+                return null;
+            }
+        }
+
+        //    if (user == null) return null;
+
+        //    // Generate JWT
+        //    var tokenHandler = new JwtSecurityTokenHandler();
+        //    var key = Encoding.ASCII.GetBytes(_config["Jwt:Key"]);
+        //    var tokenDescriptor = new SecurityTokenDescriptor
+        //    {
+        //        Subject = new ClaimsIdentity(new Claim[]
+        //        {
+        //        new Claim("id", GetUserId(user).ToString()),
+        //        //new Claim(ClaimTypes.Role, role)
+        //        }),
+        //        Expires = DateTime.UtcNow.AddHours(8),
+
+        //        Issuer = _config["Jwt:Issuer"],
+        //        Audience = _config["Jwt:Audience"],
+
+        //        SigningCredentials = new SigningCredentials(new SymmetricSecurityKey(key), SecurityAlgorithms.HmacSha256Signature)
+        //    };
+
+        //    var token = tokenHandler.CreateToken(tokenDescriptor);
+        //    return tokenHandler.WriteToken(token);
+        //}
+
+
+        private string GenerateToken(object user, string role)
+        {
+            Console.WriteLine($"🔧 STEP 6: Generating JWT token...");
+            Console.WriteLine($"   - For role: {role}");
+            Console.WriteLine($"   - For user ID: {GetUserId(user)}");
+
+            var tokenHandler = new JwtSecurityTokenHandler();
+            var key = Encoding.ASCII.GetBytes(_config["Jwt:Key"]);
+
+            var claims = new Claim[]
+            {
+        new Claim("id", GetUserId(user).ToString()),
+        new Claim(ClaimTypes.Role, role)
+            };
+
+            Console.WriteLine($"   - Claims added to token:");
+            foreach (var claim in claims)
+            {
+                Console.WriteLine($"     * {claim.Type}: {claim.Value}");
+            }
+
+            var tokenDescriptor = new SecurityTokenDescriptor
+            {
+                Subject = new ClaimsIdentity(claims),
+                Expires = DateTime.UtcNow.AddHours(8),
+                Issuer = _config["Jwt:Issuer"],
+                Audience = _config["Jwt:Audience"],
+                SigningCredentials = new SigningCredentials(new SymmetricSecurityKey(key), SecurityAlgorithms.HmacSha256Signature)
+            };
+
+            var token = tokenHandler.CreateToken(tokenDescriptor);
+            var tokenString = tokenHandler.WriteToken(token);
+
+            Console.WriteLine($"✅ STEP 7: Token created successfully - Length: {tokenString.Length} chars");
+
+            return tokenString;
+        }
+
+
+        public int GetUserId(object user)
         {
             return user switch
             {

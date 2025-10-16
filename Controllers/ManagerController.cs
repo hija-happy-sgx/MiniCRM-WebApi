@@ -8,7 +8,7 @@ namespace CRMWepApi.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    //[Authorize(Roles = "Manager")]
+    [Authorize(Roles = "Manager")]
     public class ManagerController : ControllerBase
     {
         
