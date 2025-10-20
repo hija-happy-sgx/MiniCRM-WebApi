@@ -1,4 +1,6 @@
-﻿namespace CRMWebApi.DTOs
+﻿using CRMWepApi.Models;
+
+namespace CRMWebApi.DTOs
 {
     public class DealDto
     {
@@ -6,7 +8,7 @@
         public int LeadId { get; set; }
         public string Title { get; set; }
         public decimal Amount { get; set; }
-        public string Status { get; set; } // Enum
+        public Deal Status { get; set; } // Enum
         public int StageId { get; set; }
     }
 

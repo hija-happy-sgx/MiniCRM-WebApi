@@ -70,27 +70,27 @@ namespace CRMWepApi.Services
             }
             // 2. Check SalesRepManagers
             if (user == null)
-                {
+            {
                 Console.WriteLine($"   - Checking SalesRepManager table...");
                 var srm = _context.SalesRepManagers.FirstOrDefault(s => s.Email == email && s.PasswordHash == hashedPassword);
-                    if (srm != null)
-                    {
-                        user = srm;
-                        role = UserRole.SalesRepManager.ToString(); Console.WriteLine($"✅ STEP 4: SalesRepManager user found - ID: {srm.SrmId}");
-                }
-                }
-                // 3. Check SalesReps
-                if (user == null)
+                if (srm != null)
                 {
+                    user = srm;
+                    role = UserRole.SalesRepManager.ToString(); Console.WriteLine($"✅ STEP 4: SalesRepManager user found - ID: {srm.SrmId}");
+                }
+            }
+            // 3. Check SalesReps
+            if (user == null)
+            {
                 Console.WriteLine($"   - Checking SalesRep table...");
                 var rep = _context.SalesReps.FirstOrDefault(r => r.Email == email && r.PasswordHash == hashedPassword);
-                    if (rep != null)
-                    {
-                        user = rep;
-                        role = UserRole.SalesRep.ToString();
+                if (rep != null)
+                {
+                    user = rep;
+                    role = UserRole.SalesRep.ToString();
                     Console.WriteLine($"✅ STEP 4: SalesRep user found - ID: {rep.SalesRepId}");
                 }
-                }
+            }
 
             if (user != null)
             {
@@ -133,50 +133,116 @@ namespace CRMWepApi.Services
         //}
 
 
+        //private string GenerateToken(object user, string role)
+        //{
+        //    Console.WriteLine($"🔧 STEP 6: Generating JWT token...");
+        //    Console.WriteLine($"   - For role: {role}");
+        //    Console.WriteLine($"   - For user ID: {GetUserId(user)}");
+
+        //    var tokenHandler = new JwtSecurityTokenHandler();
+        //    var key = Encoding.ASCII.GetBytes(_config["Jwt:Key"]);
+        //    Console.WriteLine(key);
+
+        //    var claims = new Claim[]
+        //    {
+        //new Claim("id", GetUserId(user).ToString()),
+        //new Claim(ClaimTypes.Role, role)
+        //    };
+
+        //    Console.WriteLine($"   - Claims added to token:");
+        //    foreach (var claim in claims)
+        //    {
+        //        Console.WriteLine($"     * {claim.Type}: {claim.Value}");
+        //    }
+
+        //    var tokenDescriptor = new SecurityTokenDescriptor
+        //    {
+        //        Subject = new ClaimsIdentity(claims),
+        //        Expires = DateTime.UtcNow.AddHours(8),
+        //        Issuer = _config["Jwt:Issuer"],
+        //        Audience = _config["Jwt:Audience"],
+        //        SigningCredentials = new SigningCredentials(new SymmetricSecurityKey(key), SecurityAlgorithms.HmacSha256Signature)
+        //    };
+
+        //    var token = tokenHandler.CreateToken(tokenDescriptor);
+        //    var tokenString = tokenHandler.WriteToken(token);
+
+        //    Console.WriteLine($"✅ STEP 7: Token created successfully - Length: {tokenString.Length} chars");
+
+        //    return tokenString;
+        //}
+
+
+
+        //private string GenerateToken(object user, string role)
+        //{
+        //    var claims = new[]
+
+        //    {
+
+        //          new Claim(ClaimTypes.Name,"hija" ),
+        //          new Claim(ClaimTypes.Role,role),
+        //          new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
+
+        //        };
+
+        //    var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_config["Jwt:Key"]));
+
+        //    var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
+
+        //    var token = new JwtSecurityToken(
+
+        //        issuer: _config["Jwt:Issuer"],
+
+        //        audience: _config["Jwt:Audience"],
+
+        //        claims: claims,
+
+        //        expires: DateTime.Now.AddHours(1),
+
+        //        signingCredentials: creds
+
+        //    );
+
+        //    return new JwtSecurityTokenHandler().WriteToken(token);
+
+        //}
+
         private string GenerateToken(object user, string role)
         {
-            Console.WriteLine($"🔧 STEP 6: Generating JWT token...");
-            Console.WriteLine($"   - For role: {role}");
-            Console.WriteLine($"   - For user ID: {GetUserId(user)}");
+            var userId = GetUserId(user);
+            var email = (string)user.GetType().GetProperty("Email")?.GetValue(user, null);
 
-            var tokenHandler = new JwtSecurityTokenHandler();
-            var key = Encoding.ASCII.GetBytes(_config["Jwt:Key"]);
-
-            var claims = new Claim[]
+            var claims = new[]
             {
-        new Claim("id", GetUserId(user).ToString()),
-        new Claim(ClaimTypes.Role, role)
-            };
+        new Claim(ClaimTypes.NameIdentifier, userId.ToString()),
+        new Claim(ClaimTypes.Email, email ?? ""),
+        new Claim(ClaimTypes.Role, role),
+        new Claim("role",role),
+        new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
+    };
 
-            Console.WriteLine($"   - Claims added to token:");
-            foreach (var claim in claims)
-            {
-                Console.WriteLine($"     * {claim.Type}: {claim.Value}");
-            }
+            var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_config["Jwt:Key"]));
+            var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
 
-            var tokenDescriptor = new SecurityTokenDescriptor
-            {
-                Subject = new ClaimsIdentity(claims),
-                Expires = DateTime.UtcNow.AddHours(8),
-                Issuer = _config["Jwt:Issuer"],
-                Audience = _config["Jwt:Audience"],
-                SigningCredentials = new SigningCredentials(new SymmetricSecurityKey(key), SecurityAlgorithms.HmacSha256Signature)
-            };
+            var token = new JwtSecurityToken(
+                issuer: _config["Jwt:Issuer"],
+                audience: _config["Jwt:Audience"],
+                claims: claims,
+                expires: DateTime.Now.AddHours(1),
+                signingCredentials: creds
+            );
 
-            var token = tokenHandler.CreateToken(tokenDescriptor);
-            var tokenString = tokenHandler.WriteToken(token);
-
-            Console.WriteLine($"✅ STEP 7: Token created successfully - Length: {tokenString.Length} chars");
-
-            return tokenString;
+            return new JwtSecurityTokenHandler().WriteToken(token);
         }
+
 
 
         public int GetUserId(object user)
         {
             return user switch
             {
-                Admin a =>a.AdminId,
+                Admin a => a.AdminId,
                 Manager m => m.ManagerId,
                 SalesRepManager s => s.SrmId,
                 SalesRep r => r.SalesRepId,

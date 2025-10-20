@@ -9,9 +9,11 @@ using Microsoft.EntityFrameworkCore;
 
 namespace CRMWepApi.Controllers
 {
+    [Authorize(Roles = "Admin")]
+
     [Route("api/admin")]
     [ApiController]
-    [Authorize(Roles = "Admin")] // Only Admin can access these endpoints
+    //[Authorize] // Only Admin can access these endpoints
     public class AdminController : ControllerBase
     {
         private readonly AdminService _adminService;
@@ -30,6 +32,7 @@ namespace CRMWepApi.Controllers
         {
 
             var users = await _adminService.GetAllUsersAsync();
+            Console.WriteLine(users);
             return Ok(users);
         }
 

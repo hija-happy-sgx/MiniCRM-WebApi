@@ -1,6 +1,7 @@
 ﻿using CRMWepApi.Data;
 using CRMWepApi.Models;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.AspNetCore.Mvc;
 
 namespace CRMWepApi.Services
 {
@@ -28,11 +29,34 @@ namespace CRMWepApi.Services
                 .Where(c => c.SalesRepId == salesRepId)
                 .ToListAsync();
 
+            // Compute metrics
+            var totalLeads = leads.Count;
+            var activeDeals = deals.Count(d => d.Status == Enums.DealStatus.Open);
+            var wonDeals = deals.Count(d => d.Status == Enums.DealStatus.Won);
+            var totalRevenue = deals.Sum(d => d.Value);
+
+            // Example logic for rates
+            var leadsConversionRate = totalLeads > 0 ? (double)wonDeals / totalLeads * 100 : 0;
+            var dealsClosingRate = deals.Count > 0 ? (double)wonDeals / deals.Count * 100 : 0;
+
+            // Take last 5 communications as recent activity
+            var recentActivity = communications.Take(5)
+                .Select(c => new {
+                    type = c.Type,
+                    description = c.Notes,
+                    date = c.LogDate.ToString("yyyy-MM-dd HH:mm") // format as needed
+                }).ToList();
+
+            // Return object matching your Angular template
             return new
             {
-                Leads = leads,
-                Deals = deals,
-                Communications = communications
+                totalLeads,
+                activeDeals,
+                wonDeals,
+                totalRevenue,
+                leadsConversionRate,
+                dealsClosingRate,
+                recentActivity
             };
         }
 

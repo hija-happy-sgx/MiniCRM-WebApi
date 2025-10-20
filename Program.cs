@@ -12,6 +12,7 @@ namespace CRMWepApi
     {
         public static void Main(string[] args)
         {
+
             var builder = WebApplication.CreateBuilder(args);
 
             // Add services to the container.
@@ -46,7 +47,9 @@ namespace CRMWepApi
                     {
                         builder.WithOrigins("http://localhost:4200") // Angular dev server URL
                                .AllowAnyHeader()
-                               .AllowAnyMethod();
+                               .AllowAnyMethod()
+                               .AllowAnyOrigin()
+                               ;
                     });
             });
 
@@ -63,20 +66,36 @@ namespace CRMWepApi
             .AddJwtBearer(options =>
             {
                
-                options.RequireHttpsMetadata = false;
-                options.SaveToken = true;
+                //options.RequireHttpsMetadata = false;
+                //options.SaveToken = true;
+                //options.TokenValidationParameters = new TokenValidationParameters
+                //{
+                //    ValidateIssuer = true,
+                //    ValidateAudience = true,
+                //    ValidIssuer = builder.Configuration["Jwt:Issuer"],
+                //    ValidAudience = builder.Configuration["Jwt:Audience"],
+
+                //    ValidateIssuerSigningKey = true,
+                //    IssuerSigningKey = new SymmetricSecurityKey(Encoding.ASCII.GetBytes(builder.Configuration["Jwt:Key"])),
+                //    ClockSkew = TimeSpan.Zero,
+                //    RoleClaimType = "role",
+                //    NameClaimType = "id",
+                //};
+
                 options.TokenValidationParameters = new TokenValidationParameters
                 {
                     ValidateIssuer = true,
                     ValidateAudience = true,
+                    ValidateLifetime = true,
+                    ValidateIssuerSigningKey = true,
                     ValidIssuer = builder.Configuration["Jwt:Issuer"],
                     ValidAudience = builder.Configuration["Jwt:Audience"],
-
-                    ValidateIssuerSigningKey = true,
-                    IssuerSigningKey = new SymmetricSecurityKey(Encoding.ASCII.GetBytes(builder.Configuration["Jwt:Key"])),
-                    ClockSkew = TimeSpan.Zero,
-                    RoleClaimType = "role",
-                    NameClaimType = "id",
+                    IssuerSigningKey = new SymmetricSecurityKey(
+         Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Key"])
+         
+         ),
+                    RoleClaimType = ClaimTypes.Role,
+                    NameClaimType = ClaimTypes.NameIdentifier
                 };
 
             });
