@@ -65,6 +65,40 @@ namespace CRMWepApi.Services
         }
 
 
+        //public async Task<IEnumerable<Lead>> GetLeadsBySalesRepAsync(int salesRepId)
+        //{
+        //    return await _context.Leads
+        //        .Where(l => l.AssignedToSalesRep == salesRepId)
+        //        .ToListAsync();
+        //}
+
+        public async Task<IEnumerable<LeadDto>> GetLeadsBySalesRepAsync(int salesRepId)
+        {
+            return await _context.Leads
+                .Where(l => l.AssignedToSalesRep == salesRepId)
+                .Select(l => new LeadDto
+                {
+                    LeadId = l.LeadId,
+                    Name = l.Name,
+                    Email = l.Email,
+                    Phone = l.Phone,
+                    Company = l.Company,
+                    Source = l.Source,
+                    Status = l.Status,
+                    AssignedToSalesRep = l.AssignedToSalesRep,
+                    SalesRepName = l.SalesRep != null ? l.SalesRep.Name : null,
+                    AssignedToSrm = l.AssignedToSrm,
+                    SrmName = l.AssignedSrm != null ? l.AssignedSrm.Name : null,
+                    CreatedByManager = l.CreatedByManager,
+                    ManagerName = l.Manager != null ? l.Manager.Name : null,
+                    CreatedAt = l.CreatedAt
+                })
+                .ToListAsync();
+        }
+
+
+
+
         //public async Task<Lead> CreateLeadAsync(Lead lead)
         //{
         //    _context.Leads.Add(lead);

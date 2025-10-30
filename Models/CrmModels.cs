@@ -1,6 +1,7 @@
 ﻿using CRMWepApi.Enums;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using System.Text.Json.Serialization;
 
 namespace CRMWepApi.Models
 {
@@ -138,6 +139,9 @@ namespace CRMWepApi.Models
 
         [ForeignKey(nameof(Lead))]
         public int LeadId { get; set; }
+
+        [JsonIgnore
+            ]
         public Lead? Lead { get; set; }
 
         [ForeignKey(nameof(Stage))]

@@ -53,7 +53,6 @@ namespace CRMWepApi.Services
                         Console.WriteLine($"STEP 4: Admin user found - ID: {admin.AdminId}");
                     }
                 }
-
             }
 
             // 1. Check Managers

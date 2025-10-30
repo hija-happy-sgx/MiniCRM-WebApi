@@ -29,6 +29,15 @@ namespace CRMWepApi.Services
                 .ToListAsync();
         }
 
+        public async Task<IEnumerable<CommunicationLog>> GetBySalesRepIdAsync(int salesRepId)
+        {
+            return await _context.CommunicationLogs
+                .Where(c => c.SalesRepId == salesRepId)
+                .ToListAsync();
+        }
+
+
+
         // Add a new communication log
         public async Task<CommunicationLog> AddAsync(CommunicationLog log)
         {

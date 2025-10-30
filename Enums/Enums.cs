@@ -12,14 +12,15 @@
     {
         New, 
         Contacted,
-        Qualified,
         Converted,
+        Qualified,
         Disqualified
     }
 
     public enum DealStatus
     {
       Open,
+      Contacted,
       Won,
       Lost
 

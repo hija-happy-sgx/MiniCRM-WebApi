@@ -1,4 +1,5 @@
 ﻿using CRMWepApi.Models;
+using System.ComponentModel.DataAnnotations;
 
 namespace CRMWebApi.DTOs
 {
@@ -12,10 +13,25 @@ namespace CRMWebApi.DTOs
         public int StageId { get; set; }
     }
 
+    //public class CreateDealDto
+    //{
+    //    public int LeadId { get; set; }
+    //    public string Title { get; set; }
+    //    public decimal Amount { get; set; }
+    //}
+
     public class CreateDealDto
     {
+        
+       
         public int LeadId { get; set; }
-        public string Title { get; set; }
-        public decimal Amount { get; set; }
+   
+        public string Name { get; set; }
+        public decimal Value { get; set; }
+        public int StageId { get; set; } 
+        public int Probablity { get; set; }
+        public DateTime ExpectedCloseDate { get; set; } 
     }
+
+
 }

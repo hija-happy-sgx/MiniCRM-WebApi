@@ -1,7 +1,12 @@
-﻿using CRMWepApi.Models;
+﻿using CRMWebApi.DTOs;
+using CRMWepApi.Data;
+using CRMWepApi.DTOs;
+using CRMWepApi.Enums;
+using CRMWepApi.Models;
 using CRMWepApi.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 
 namespace CRMWepApi.Controllers
 {
@@ -12,10 +17,14 @@ namespace CRMWepApi.Controllers
     {
         private readonly DealsService _dealsService;
         private readonly CommunicationLogService _logService;
+        private readonly CrmDbContext _context;
 
-        public DealsController(DealsService dealsService)
+        public DealsController(DealsService dealsService, CommunicationLogService logService, CrmDbContext context)
         {
+            _context = context;
             _dealsService = dealsService;
+            _logService = logService;
+
         }
 
         [HttpGet]
@@ -33,12 +42,47 @@ namespace CRMWepApi.Controllers
             return Ok(deal);
         }
 
-        [HttpPost]
-        public async Task<IActionResult> CreateDeal([FromBody] Deal deal)
+        //[HttpPost]
+        //public async Task<IActionResult> CreateDeal([FromBody] Deal deal)
+        //{
+        //    var created = await _dealsService.CreateDealAsync(deal);
+        //    return CreatedAtAction(nameof(GetDeal), new { id = created.DealId }, created);
+        //}
+
+
+
+        [HttpPost("deals")]
+        public async Task<IActionResult> CreateDeal([FromQuery] int salesRepId, [FromBody] CreateDealDto model)
         {
-            var created = await _dealsService.CreateDealAsync(deal);
-            return CreatedAtAction(nameof(GetDeal), new { id = created.DealId }, created);
+            var lead = await _context.Leads.FirstOrDefaultAsync(l => l.LeadId == model.LeadId);
+            if (lead == null || lead.Status != LeadStatus.Qualified)
+                return BadRequest("Lead is not qualified or doesn't exist.");
+            if (lead.Status != LeadStatus.Qualified)
+                return BadRequest("Only Qualified leads can be converted to deals.");
+
+            var firstStage = await _context.PipelineStages.OrderBy(s => s.StageOrder).FirstOrDefaultAsync();
+
+            var deal = new Deal
+            {
+                LeadId = lead.LeadId,
+                AssignedToSalesRep = salesRepId,
+                DealName = model.Name,
+                Value = model.Value,
+                StageId = model.StageId,
+                Status = DealStatus.Open,
+                CreatedAt = DateTime.UtcNow,
+                ExpectedCloseDate = model.ExpectedCloseDate
+            };
+
+            _context.Deals.Add(deal);
+
+            // to convert the lead
+            lead.Status = LeadStatus.Converted;
+            await _context.SaveChangesAsync();
+            return Ok(new { Message = "Deal created successfully.", DealId = deal.DealId });
         }
+
+
 
         [HttpPut("{id}")]
         public async Task<IActionResult> UpdateDeal(int id, [FromBody] Deal deal)

@@ -6,6 +6,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using System.Security.Claims;
 using System.Text;
+using System.Text.Json.Serialization;
 namespace CRMWepApi
 {
     public class Program
@@ -17,7 +18,12 @@ namespace CRMWepApi
 
             // Add services to the container.
 
-            builder.Services.AddControllers();
+            builder.Services.AddControllers()
+                .AddJsonOptions(opt =>
+            {
+                opt.JsonSerializerOptions.ReferenceHandler = System.Text.Json.Serialization.ReferenceHandler.IgnoreCycles;
+                opt.JsonSerializerOptions.WriteIndented = true;
+            }); 
             // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
             builder.Services.AddEndpointsApiExplorer();
             builder.Services.AddSwaggerGen();
@@ -53,6 +59,12 @@ namespace CRMWepApi
                     });
             });
 
+           
+
+            builder.Services.AddControllers().AddJsonOptions(options =>
+            {
+                options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter());
+            });
 
 
             // JWT Authentication
@@ -66,21 +78,7 @@ namespace CRMWepApi
             .AddJwtBearer(options =>
             {
                
-                //options.RequireHttpsMetadata = false;
-                //options.SaveToken = true;
-                //options.TokenValidationParameters = new TokenValidationParameters
-                //{
-                //    ValidateIssuer = true,
-                //    ValidateAudience = true,
-                //    ValidIssuer = builder.Configuration["Jwt:Issuer"],
-                //    ValidAudience = builder.Configuration["Jwt:Audience"],
-
-                //    ValidateIssuerSigningKey = true,
-                //    IssuerSigningKey = new SymmetricSecurityKey(Encoding.ASCII.GetBytes(builder.Configuration["Jwt:Key"])),
-                //    ClockSkew = TimeSpan.Zero,
-                //    RoleClaimType = "role",
-                //    NameClaimType = "id",
-                //};
+        
 
                 options.TokenValidationParameters = new TokenValidationParameters
                 {
@@ -93,7 +91,7 @@ namespace CRMWepApi
                     IssuerSigningKey = new SymmetricSecurityKey(
          Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Key"])
          
-         ),
+                      ),
                     RoleClaimType = ClaimTypes.Role,
                     NameClaimType = ClaimTypes.NameIdentifier
                 };
